@@ -1,12 +1,13 @@
 USE [SB_PA_Margaret]
 GO
 
-/****** Object:  StoredProcedure [dbo].[CREATE_ACTIVE_LOAN_TBL]    Script Date: 2/1/2018 3:10:19 PM ******/
+/****** Object:  StoredProcedure [dbo].[CREATE_ACTIVE_LOAN_TBL]    Script Date: 2/2/2018 9:47:44 AM ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
+
 
 
 
@@ -18,7 +19,9 @@ BEGIN
 
 --DECLARE @DATE_KEY INT = 20171130;
 
-DELETE FROM [SB_PA_Margaret].[FRB\mlan].[TBL_LOAN_STATUS] 
+UPDATE [SB_PA_Margaret].[FRB\mlan].[TBL_LOAN_STATUS] 
+SET [CURRENT] = 'N'
+FROM [SB_PA_Margaret].[FRB\mlan].[TBL_LOAN_STATUS] 
 WHERE DATE_KEY = @DATE_KEY;
 
 DROP TABLE #ACCT_INC;
@@ -107,6 +110,10 @@ INSERT INTO [SB_PA_Margaret].[FRB\mlan].[TBL_LOAN_STATUS] (
       ,[CURR_FUT_1_1_FLAG]
       ,[BISYS_NBR_FMT]
       ,[BISYS_NBR_MID]
+	  ,[POWERLENDER_ACCT_NBR]
+	  ,[LOANFACT_ACCT_NBR]
+	  ,[CREMF_ACCT_NBR]
+	  ,[CURRENT]
       ,[INSERT_DATETIME]) 
 
 SELECT  A.LN_KEY
@@ -122,13 +129,50 @@ SELECT  A.LN_KEY
 	   ,A.CURR_FUT_1_1_FLAG 
 	   ,L.[BISYS_NBR_FMT]
 	   ,L.[BISYS_NBR_MID]
+	   ,CASE 
+			WHEN EMP.[Customer_key] IS NULL THEN PL.[A304_CustomerKey] 
+			ELSE EMP.[Customer_key]
+		END AS PL_ACCT_NBR
+	   ,PLF.[Loan_Key]
+	   ,IP.[BisysNo_Short]
+	   ,'Y' AS [CURRENT]
 	   ,GETDATE() AS INSERT_DATETIME 
+
 FROM #ACCT_INC A
 
 LEFT JOIN [RDM_LOAN].[ADJ].[T_DIM_LOAN] L ON A.LN_KEY=L.LN_KEY
 
 
+  LEFT JOIN [PLProd].[dbo].[vw_powerlender] PL
+	ON PL.A304_CustomerKey =
+		CASE 
+		WHEN SUBSTRING(L.Bisys_Nbr_Fmt,4,1)='7'
+			 THEN '0' + SUBSTRING(L.Bisys_Nbr_Fmt,4,6) + RIGHT(L.Bisys_Nbr_Fmt,1)
+		ELSE 
+			 RIGHT(L.Bisys_Nbr_Fmt,8)
+		END
+  LEFT JOIN [PLProd].[dbo].[vw_LoanFacts] PLF
+	ON PLF.Loan_Key =
+		CASE 
+		WHEN SUBSTRING(L.Bisys_Nbr_Fmt,4,1)='7'
+			 THEN LEFT(L.Bisys_Nbr_Fmt,2) + '-0' + SUBSTRING(L.Bisys_Nbr_Fmt,4,6) + RIGHT(L.Bisys_Nbr_Fmt,1)
+		ELSE 
+			 L.Bisys_Nbr_Fmt
+		END
+  LEFT JOIN [PLProd_EMPLOYEE].[dbo].[VW_LOAN_FACT_EMP_CUSO] EMP
+	ON EMP.[Customer_key] =
+		CASE 
+		WHEN SUBSTRING(L.Bisys_Nbr_Fmt,4,1)='7'
+			 THEN '0' + SUBSTRING(L.Bisys_Nbr_Fmt,4,6) + RIGHT(L.Bisys_Nbr_Fmt,1)
+		ELSE 
+			 RIGHT(L.Bisys_Nbr_Fmt,8)
+		END
+  LEFT JOIN [CREMF].[dbo].[CRE_Collateral] IP
+    ON right(L.Bisys_Nbr_Fmt,8)=IP.[BisysNo_Short] 
+
+
 END
+
 
 
 
