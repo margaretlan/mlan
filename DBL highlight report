@@ -1,4 +1,52 @@
-SELECT [Construction Master Records].[Data Prod Date], [Construction Master Records].[Account #], [Construction Master Records].[Officer], [Construction Master Records].[Reason for Highlight], [Construction Master Records].[Relationship Name], [Construction Master Records].[Borrower Name], Trim([Construction Master Records.Property Address]) & ", " & Trim([Construction Master Records.property city]) & ", " & Trim([Construction Master Records.property state]) & "  " & Trim([Construction Master Records.property zip]) AS Property, [Highlights Ranking].Rank, [Construction Master Records].Rank AS Severity, [commitment]/1000 AS [Commit], [Net Book Balance]/1000 AS [Book Balance], [Construction Master Records].[Origination Date], [Construction Master Records].[Maturity Date], [Construction Master Records].[AFS Risk Rating], [Construction Master Records].[Orig LTV], [Construction Master Records].[Last Draw Date], [Construction Master Records].[% of HC Disbursed], [Construction Master Records].[% of Project Complete], [Highlights for Blaine's DBL report].Comment, [Highlights Ranking].Type, [SumOfCommitment]/1000 AS SumOfCommit, [PostLoanLiquidityAmt]/1000 AS PLL, [netWorth]/1000 AS NW INTO [DBLReport w/ RM] IN '\\sf3\User1\SHARED\CREDITAD\LOAN MONITORING\Database\Construction Database_be.accdb'
-FROM ((([Construction Master Records] LEFT JOIN [Highlights for Blaine's DBL report] ON [Construction Master Records].[Account #] = [Highlights for Blaine's DBL report].[Account #]) INNER JOIN [Highlights Ranking] ON [Construction Master Records].[Reason for Highlight] = [Highlights Ranking].Type) INNER JOIN [Construction Totals] ON [Construction Master Records].[Data Prod Date] = [Construction Totals].PROD_DT) LEFT JOIN [Powerlender MAKE TABLE - Current] ON [Construction Master Records].[BISYS #] = [Powerlender MAKE TABLE - Current].Loan_Key
-WHERE ((([Construction Master Records].[Data Prod Date])=[Forms]![MonthlyUpdates].[date]) AND (([Construction Master Records].[Reason for Highlight])<>" ") AND (([Construction Master Records].[AFS Risk Rating])<>"09" And ([Construction Master Records].[AFS Risk Rating])<>"9")) AND (([Construction Master Records].[Reason for Highlight])<>"Highlighted - Discussion List")
-ORDER BY [Construction Master Records].[Reason for Highlight], [Construction Master Records].Rank DESC;
+SELECT [construction master records].[data prod date], 
+       [construction master records].[account #], 
+       [construction master records].[officer], 
+       [construction master records].[reason for highlight], 
+       [construction master records].[relationship name], 
+       [construction master records].[borrower name], 
+       Trim([construction master records.property address]) & "," & Trim( 
+       [construction master records.property city]) & "," & Trim( 
+       [construction master records.property state]) & "  " & Trim( 
+       [construction master records.property zip]) AS Property, 
+       [highlights ranking].rank, 
+       [construction master records].rank          AS Severity, 
+       [commitment] / 1000                         AS [Commit], 
+       [net book balance] / 1000                   AS [Book Balance], 
+       [construction master records].[origination date], 
+       [construction master records].[maturity date], 
+       [construction master records].[afs risk rating], 
+       [construction master records].[orig ltv], 
+       [construction master records].[last draw date], 
+       [construction master records].[% of hc disbursed], 
+       [construction master records].[% of project complete], 
+       [highlights for blaine's dbl report].comment, 
+       [highlights ranking].type, 
+       [sumofcommitment] / 1000                    AS SumOfCommit, 
+       [postloanliquidityamt] / 1000               AS PLL, 
+       [networth] / 1000                           AS NW 
+INTO   [dblreport w/ rm] IN 
+'\\sf3\User1\SHARED\CREDITAD\LOAN MONITORING\Database\Construction Database_be.accdb' 
+FROM   ((([construction master records] 
+          LEFT JOIN [highlights for blaine's dbl report] 
+                 ON [construction master records].[account #] = 
+                    [highlights for blaine's dbl report].[account #]) 
+         INNER JOIN [highlights ranking] 
+                 ON [construction master records].[reason for highlight] = 
+                    [highlights ranking].type) 
+        INNER JOIN [construction totals] 
+                ON [construction master records].[data prod date] = 
+                   [construction totals].prod_dt) 
+       LEFT JOIN [powerlender make table - current] 
+              ON [construction master records].[bisys #] = 
+                 [powerlender make table - current].loan_key 
+WHERE  ( ( ( [construction master records].[data prod date] ) = [forms] ! 
+                    [monthlyupdates].[date] ) 
+         AND ( ( [construction master records].[reason for highlight] ) <> "" ) 
+         AND ( ( [construction master records].[afs risk rating] ) <> "09" 
+               AND 
+       ( [construction master records].[afs risk rating] ) <> "9" ) ) 
+       AND 
+( 
+( [construction master records].[reason for highlight] ) <> "highlighted - discussion list" ) 
+ORDER  BY [construction master records].[reason for highlight], 
+          [construction master records].rank DESC; 
