@@ -175,46 +175,36 @@ SELECT EOM.DATE_KEY
 
 ------======= OUTPUT LTV FICO IN WRITEBACK FORM=======
 WITH WV AS (
---SELECT 'LTV_ORIG' AS FIELD, ACCT_NBR, SRC_TYPE_CD, IIF(LTV_ORIG = 0, NULL, CONVERT(DECIMAL(16,4), (LTV_ORIG/100))) AS VALUE, 
---	CONVERT(DATE, '2/28/2018') AS EFFECTIVE_FROM_DT, '' AS EFFECTIVE_TO_DT, 'Original LTV value Update' AS REASON, 'mlan' AS [USER_ID]
+SELECT 'LTV_ORIG' AS FIELD, ACCT_NBR, SRC_TYPE_CD, IIF(LTV_ORIG = 0, NULL, CONVERT(DECIMAL(16,4), (LTV_ORIG/100))) AS VALUE, 
+	CONVERT(DATE, '2/28/2018') AS EFFECTIVE_FROM_DT, '' AS EFFECTIVE_TO_DT, 'Original LTV value Update' AS REASON, 'mlan' AS [USER_ID]
 --FROM #ALL
---WHERE [BALANCE_SHEET_CATEGORY_CA] IN ('Commercial Real Estate Mtgs', 'Home Equity Lines of Credit', 'Investor', 'Loans Held for Sale', 'MF / Comm''l Construction',
---	'Multifamily Mtgs 5+ Units','REO - HELOC','SFR Construction Loans','Single Family Mtgs 1-4 Units')
---)
-----UNION
---SELECT 'FICO_ORIG' AS FIELD, ACCT_NBR, SRC_TYPE_CD, IIF(FICO_ORIG > 0, FICO_ORIG, NULL) AS VALUE, 
---	CONVERT(DATE, '1/31/2018') AS EFFECTIVE_FROM_DT, '' AS EFFECTIVE_TO_DT, 'Original FICO Score Update' AS REASON, 'mlan' AS [USER_ID]
---FROM #ALL
---)
---UNION
---SELECT 'FICO_CURR' AS FIELD, ACCT_NBR, SRC_TYPE_CD, IIF(FICO_CURR >0, FICO_CURR, NULL) AS VALUE, 
---	CONVERT(DATE, '1/31/2018') AS EFFECTIVE_FROM_DT, '' AS EFFECTIVE_TO_DT, 'Current FICO Score Update' AS REASON, 'mlan' AS [USER_ID]
---FROM #ALL
---)
-
-------======= IMPORT LTV AND FICO IN WRITEBACK FILE INTO THE WB TABLE=======
---INSERT INTO [SB_PA_Margaret].[FRB\mlan].[TBL_WB_EOM] (
---       [FIELD]
---      ,[ACCT_NBR]
---      ,[SRC_TYPE_CD]
---      ,[VALUE]
---      ,[EFFECTIVE_FROM_DT]
---      ,[EFFECTIVE_TO_DT]
---      ,[REASON]
---      ,[USER_ID]
---      ,[INSERT_DT]
---)
---SELECT
---       [FIELD]
---      ,[ACCT_NBR]
---      ,[SRC_TYPE_CD]
---      ,[VALUE]
---      ,[EFFECTIVE_FROM_DT]
---      ,[EFFECTIVE_TO_DT]
---      ,[REASON]
---      ,[USER_ID]
---      ,GETDATE() [INSERT_DT]
---  FROM WV
+FROM [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_TEMP]
+WHERE [BALANCE_SHEET_CATEGORY] IN ('Commercial Real Estate Mtgs', 'Home Equity Lines of Credit', 'Investor', 'Loans Held for Sale', 'MF / Comm''l Construction',
+	'Multifamily Mtgs 5+ Units','REO - HELOC','SFR Construction Loans','Single Family Mtgs 1-4 Units')
+)
+----======= IMPORT LTV AND FICO IN WRITEBACK FILE INTO THE WB TABLE=======
+INSERT INTO [SB_PA_Margaret].[FRB\mlan].[TBL_WB_EOM] (
+       [FIELD]
+      ,[ACCT_NBR]
+      ,[SRC_TYPE_CD]
+      ,[VALUE]
+      ,[EFFECTIVE_FROM_DT]
+      ,[EFFECTIVE_TO_DT]
+      ,[REASON]
+      ,[USER_ID]
+      ,[INSERT_DT]
+)
+SELECT
+       [FIELD]
+      ,[ACCT_NBR]
+      ,[SRC_TYPE_CD]
+      ,[VALUE]
+      ,[EFFECTIVE_FROM_DT]
+      ,[EFFECTIVE_TO_DT]
+      ,[REASON]
+      ,[USER_ID]
+      ,GETDATE() [INSERT_DT]
+  FROM WV
 
 ----==================================NULL LTV CHECK==============================================================================
 
@@ -287,8 +277,7 @@ WITH WV AS (
 --WHERE [BALANCE_SHEET_CATEGORY_CA] IS NULL
 
 
-/****** APPEND NEW LOAN TO LTV EOM TABLE  ******/
---DELETE FROM  [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_EOM] WHERE DATE_KEY = 20180131 
+/****** APPEND NEW LOAN TO LTV TEMP TABLE  ******/
 
 --INSERT INTO [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_TEMP]
 --(
@@ -309,6 +298,7 @@ WITH WV AS (
 --      ,[EFFECTIVE_FROM_DT]
 --      ,[CHECK_STATUS]
 --)
+
 --SELECT 
 --       #all.[DATE_KEY]
 --      ,#all.[ACCT_OPEN_DT]
@@ -330,7 +320,50 @@ WITH WV AS (
 --  LEFT JOIN RDM_LOAN.[ADJ].[T_FACT_LOAN_EOM] EOM
 --	on EOM.ACCT_NBR = #ALL.ACCT_NBR and EOM.DATE_KEY = 20180228
 
---SELECT * FROM   [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_TEMP]
+
+/******========== APPEND NEW LOAN TO LTV EOM TABLE  AFTER WB******/
+--DELETE FROM  [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_EOM] WHERE DATE_KEY = 20180228 
+
+--INSERT INTO [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_EOM]
+--(
+--       [DATE_KEY]
+--      ,[ACCT_OPEN_DT]
+--      ,[LN_KEY]
+--      ,[ACCT_NBR]
+--      ,[TRANCHE_ACCT_NBR]
+--      ,[BISYS_NBR_FMT]
+--      ,[SRC_TYPE_CD]
+--      ,[BALANCE_SHEET_CATEGORY]
+--      ,[GL_DESCRIPTION]
+--      ,[LTV_ORIG]
+--      --,[FICO_ORIG]
+--      --,[FICO_CURR]
+--      ,[SCRUBBED_DATE]
+--      ,[SCRUBBED_BY]
+--      ,[EFFECTIVE_FROM_DT]
+--      ,[CHECK_STATUS]
+--)
+
+--SELECT  
+--      [DATE_KEY]
+--      ,[ACCT_OPEN_DT]
+--      ,[LN_KEY]
+--      ,[ACCT_NBR]
+--      ,[TRANCHE_ACCT_NBR]
+--      ,[BISYS_NBR_FMT]
+--      ,[SRC_TYPE_CD]
+--      ,[BALANCE_SHEET_CATEGORY]
+--      ,[GL_DESCRIPTION]
+--      ,[LTV_ORIG]
+--      ,[SCRUBBED_DATE]
+--      ,[SCRUBBED_BY]
+--      ,[EFFECTIVE_FROM_DT]
+--      ,[CHECK_STATUS]
+--  FROM [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_TEMP]
+--  WHERE DATE_KEY = 20180228 
+
+
+--SELECT * FROM   [SB_PA_Margaret].[FRB\mlan].[TBL_FICO_TEMP]
 --WHERE ACCT_NBR IN (
 --'0210028770-0059',
 --'0210249376-0026',
