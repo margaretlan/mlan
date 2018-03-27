@@ -277,8 +277,7 @@ SELECT
 --WHERE [BALANCE_SHEET_CATEGORY_CA] IS NULL
 
 
-/****** APPEND NEW LOAN TO LTV EOM TABLE  ******/
---DELETE FROM  [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_EOM] WHERE DATE_KEY = 20180131 
+/****** APPEND NEW LOAN TO LTV TEMP TABLE  ******/
 
 --INSERT INTO [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_TEMP]
 --(
@@ -299,6 +298,7 @@ SELECT
 --      ,[EFFECTIVE_FROM_DT]
 --      ,[CHECK_STATUS]
 --)
+
 --SELECT 
 --       #all.[DATE_KEY]
 --      ,#all.[ACCT_OPEN_DT]
@@ -320,7 +320,50 @@ SELECT
 --  LEFT JOIN RDM_LOAN.[ADJ].[T_FACT_LOAN_EOM] EOM
 --	on EOM.ACCT_NBR = #ALL.ACCT_NBR and EOM.DATE_KEY = 20180228
 
---SELECT * FROM   [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_TEMP]
+
+/******========== APPEND NEW LOAN TO LTV EOM TABLE  AFTER WB******/
+--DELETE FROM  [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_EOM] WHERE DATE_KEY = 20180228 
+
+--INSERT INTO [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_EOM]
+--(
+--       [DATE_KEY]
+--      ,[ACCT_OPEN_DT]
+--      ,[LN_KEY]
+--      ,[ACCT_NBR]
+--      ,[TRANCHE_ACCT_NBR]
+--      ,[BISYS_NBR_FMT]
+--      ,[SRC_TYPE_CD]
+--      ,[BALANCE_SHEET_CATEGORY]
+--      ,[GL_DESCRIPTION]
+--      ,[LTV_ORIG]
+--      --,[FICO_ORIG]
+--      --,[FICO_CURR]
+--      ,[SCRUBBED_DATE]
+--      ,[SCRUBBED_BY]
+--      ,[EFFECTIVE_FROM_DT]
+--      ,[CHECK_STATUS]
+--)
+
+--SELECT  
+--      [DATE_KEY]
+--      ,[ACCT_OPEN_DT]
+--      ,[LN_KEY]
+--      ,[ACCT_NBR]
+--      ,[TRANCHE_ACCT_NBR]
+--      ,[BISYS_NBR_FMT]
+--      ,[SRC_TYPE_CD]
+--      ,[BALANCE_SHEET_CATEGORY]
+--      ,[GL_DESCRIPTION]
+--      ,[LTV_ORIG]
+--      ,[SCRUBBED_DATE]
+--      ,[SCRUBBED_BY]
+--      ,[EFFECTIVE_FROM_DT]
+--      ,[CHECK_STATUS]
+--  FROM [SB_PA_Margaret].[FRB\mlan].[TBL_LTV_TEMP]
+--  WHERE DATE_KEY = 20180228 
+
+
+--SELECT * FROM   [SB_PA_Margaret].[FRB\mlan].[TBL_FICO_TEMP]
 --WHERE ACCT_NBR IN (
 --'0210028770-0059',
 --'0210249376-0026',
